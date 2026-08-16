@@ -4,7 +4,7 @@ import WeatherCard from './components/WeatherCard';
 import ForecastList from './components/ForecastList';
 import Loader from './components/Loader';
 import ErrorMessage from './components/ErrorMessage';
-import { fetchWeatherByCity } from './services/weatherApi';
+import { fetchWeatherByCity, fetchWeatherByLocation } from './services/weatherApi';
 import './App.css';
 
 export default function App() {
@@ -12,12 +12,12 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  async function handleSearch(city) {
+  async function handleSearch(query) {
     setIsLoading(true);
     setError(null);
 
     try {
-      const data = await fetchWeatherByCity(city);
+      const data = typeof query === 'string' ? await fetchWeatherByCity(query) : await fetchWeatherByLocation(query);
       setWeather(data);
     } catch (err) {
       setWeather(null);
@@ -30,8 +30,8 @@ export default function App() {
   return (
     <div className="app">
       <header className="app__header">
-        <h1 className="app__title">Weather App</h1>
-        <p className="app__subtitle">Consulta el clima actual y el pronóstico de cualquier ciudad</p>
+        <span className="app__eyebrow">Estación meteorológica</span>
+        <h1 className="app__title">Clima</h1>
       </header>
 
       <main className="app__content">

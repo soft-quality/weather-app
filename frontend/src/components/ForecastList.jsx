@@ -8,19 +8,17 @@ export default function ForecastList({ daily }) {
   }
 
   return (
-    <section className="forecast-list glass" aria-label="Pronostico de los proximos dias">
-      <h3 className="forecast-list__title">Proximos dias</h3>
+    <section className="forecast-list" aria-label="Pronostico de los proximos dias">
+      <h3 className="forecast-list__title">Próximos días</h3>
       <ul className="forecast-list__items">
         {daily.map((day) => {
           const condition = describeWeatherCode(day.weatherCode);
           return (
             <li key={day.date} className="forecast-list__item">
               <span className="forecast-list__day">{formatDayLabel(day.date)}</span>
-              <WeatherIcon icon={condition.icon} size={28} className="forecast-list__icon" />
-              <span className="forecast-list__temps">
-                <strong>{Math.round(day.tempMax)}°</strong>
-                <span className="forecast-list__temp-min">{Math.round(day.tempMin)}°</span>
-              </span>
+              <WeatherIcon icon={condition.icon} size={26} className="forecast-list__icon" />
+              <span className="forecast-list__temp-max">{Math.round(day.tempMax)}°</span>
+              <span className="forecast-list__temp-min">{Math.round(day.tempMin)}°</span>
             </li>
           );
         })}

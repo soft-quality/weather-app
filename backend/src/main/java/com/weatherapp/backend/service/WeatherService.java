@@ -37,11 +37,27 @@ public class WeatherService {
 
         logger.info("Consultando el clima para '{}' ({}, {})", city.name(), city.latitude(), city.longitude());
 
+        ForecastApiResponse forecast = fetchForecast(city.latitude(), city.longitude(), cityName);
+        LocationDto location = new LocationDto(city.name(), city.admin1(), city.country(), city.latitude(), city.longitude());
+
+        return toWeatherResponseDto(location, forecast);
+    }
+
+    public WeatherResponseDto getWeatherForCoordinates(double latitude, double longitude, String name, String admin1, String country) {
+        logger.info("Consultando el clima para coordenadas ({}, {})", latitude, longitude);
+
+        ForecastApiResponse forecast = fetchForecast(latitude, longitude, name);
+        LocationDto location = new LocationDto(name, admin1, country, latitude, longitude);
+
+        return toWeatherResponseDto(location, forecast);
+    }
+
+    private ForecastApiResponse fetchForecast(double latitude, double longitude, String label) {
         ForecastApiResponse forecast = forecastRestClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/forecast")
-                        .queryParam("latitude", city.latitude())
-                        .queryParam("longitude", city.longitude())
+                        .queryParam("latitude", latitude)
+                        .queryParam("longitude", longitude)
                         .queryParam("current", "temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m")
                         .queryParam("daily", "weather_code,temperature_2m_max,temperature_2m_min")
                         .queryParam("timezone", "auto")
@@ -50,14 +66,13 @@ public class WeatherService {
                 .body(ForecastApiResponse.class);
 
         if (forecast == null || forecast.current() == null || forecast.daily() == null) {
-            throw new WeatherProviderException("No se pudo obtener el clima para " + cityName);
+            throw new WeatherProviderException("No se pudo obtener el clima para " + label);
         }
 
-        return toWeatherResponseDto(city, forecast);
+        return forecast;
     }
 
-    private WeatherResponseDto toWeatherResponseDto(GeocodingResult city, ForecastApiResponse forecast) {
-        LocationDto location = new LocationDto(city.name(), city.country(), city.latitude(), city.longitude());
+    private WeatherResponseDto toWeatherResponseDto(LocationDto location, ForecastApiResponse forecast) {
         CurrentWeatherDto current = toCurrentWeatherDto(forecast.current());
         List<DailyForecastDto> daily = toDailyForecastList(forecast.daily());
 

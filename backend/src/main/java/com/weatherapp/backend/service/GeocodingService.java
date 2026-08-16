@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
+
 @Service
 public class GeocodingService {
 
@@ -39,5 +41,30 @@ public class GeocodingService {
         }
 
         return response.results().get(0);
+    }
+
+    public List<GeocodingResult> searchCities(String query) {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+
+        logger.info("Buscando sugerencias de ciudades para '{}'", query);
+
+        GeocodingApiResponse response = geocodingRestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/search")
+                        .queryParam("name", query)
+                        .queryParam("count", 8)
+                        .queryParam("language", "es")
+                        .queryParam("format", "json")
+                        .build())
+                .retrieve()
+                .body(GeocodingApiResponse.class);
+
+        if (response == null || response.results() == null) {
+            return List.of();
+        }
+
+        return response.results();
     }
 }

@@ -8,17 +8,17 @@ export default function WeatherCard({ weather }) {
   const icon = condition.icon === 'sun' && !current.isDay ? 'moon' : condition.icon;
 
   return (
-    <section className="weather-card glass" aria-label={`Clima actual en ${location.name}`}>
+    <section className="weather-card" aria-label={`Clima actual en ${location.name}`}>
       <header className="weather-card__location">
         <h2>{location.name}</h2>
-        <span>{location.country}</span>
+        <span>{[location.admin1, location.country].filter(Boolean).join(', ')}</span>
       </header>
 
-      <div className="weather-card__main">
-        <WeatherIcon icon={icon} className="weather-card__icon" size={64} />
+      <div className="weather-card__readout">
         <span className="weather-card__temp">{Math.round(current.temperature)}°</span>
+        <WeatherIcon icon={icon} className="weather-card__icon" size={40} />
       </div>
-
+      <div className="weather-card__baseline" aria-hidden="true" />
       <p className="weather-card__condition">{condition.label}</p>
 
       <dl className="weather-card__details">

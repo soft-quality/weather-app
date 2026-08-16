@@ -18,7 +18,16 @@ public class WeatherController {
     }
 
     @GetMapping
-    public WeatherResponseDto getWeather(@RequestParam String city) {
+    public WeatherResponseDto getWeather(
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lon,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String admin1,
+            @RequestParam(required = false) String country) {
+        if (lat != null && lon != null) {
+            return weatherService.getWeatherForCoordinates(lat, lon, name, admin1, country);
+        }
         return weatherService.getWeatherForCity(city);
     }
 }

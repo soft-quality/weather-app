@@ -1,24 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-  --color-primary: #0284c7;
-  --color-on-primary: #ffffff;
-  --color-secondary: #0ea5e9;
-  --color-accent: #f59e0b;
-  --color-background: #f0f9ff;
-  --color-foreground: #0f172a;
-  --color-muted: #eff7fb;
-  --color-border: #e0f0f8;
-  --color-destructive: #dc2626;
-  --color-ring: #0284c7;
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-ink: #12161c;
+  --color-muted: #667085;
+  --color-faint: #98a2b3;
+  --color-line: #e4e7ec;
+  --color-accent: #ff6a3d;
+  --color-accent-ink: #fffaf7;
+  --color-danger: #d92d20;
+  --color-danger-bg: #fef3f2;
 
-  --gradient-sky: linear-gradient(160deg, #38bdf8 0%, #0ea5e9 45%, #0284c7 100%);
-
-  --glass-bg: rgba(255, 255, 255, 0.18);
-  --glass-bg-strong: rgba(255, 255, 255, 0.28);
-  --glass-border: rgba(255, 255, 255, 0.35);
-  --glass-shadow: 0 8px 32px rgba(2, 44, 74, 0.25);
-  --glass-blur: 18px;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -27,24 +23,28 @@
   --space-5: 32px;
   --space-6: 48px;
 
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+
+  --shadow-pop: 0 8px 24px rgba(18, 22, 28, 0.1);
 
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --gradient-sky: linear-gradient(160deg, #0f172a 0%, #1e293b 45%, #0c4a6e 100%);
-    --color-background: #0f172a;
-    --color-foreground: #f0f9ff;
-    --color-muted: #1e293b;
-    --color-border: rgba(255, 255, 255, 0.12);
+    --color-bg: #0b0d10;
+    --color-surface: #14171c;
+    --color-ink: #f2f4f7;
+    --color-muted: #8b93a1;
+    --color-faint: #565e6b;
+    --color-line: #23262c;
+    --color-accent: #ff8259;
+    --color-accent-ink: #14100d;
+    --color-danger: #f97066;
+    --color-danger-bg: rgba(249, 112, 102, 0.12);
 
-    --glass-bg: rgba(15, 23, 42, 0.35);
-    --glass-bg-strong: rgba(15, 23, 42, 0.5);
-    --glass-border: rgba(255, 255, 255, 0.14);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.45);
 
     color-scheme: dark;
   }
@@ -62,13 +62,12 @@ body,
 
 body {
   margin: 0;
-  font-family: 'Fira Sans', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
   font-weight: 400;
   line-height: 1.5;
   font-size: 16px;
-  color: var(--color-on-primary);
-  background: var(--gradient-sky);
-  background-attachment: fixed;
+  color: var(--color-ink);
+  background: var(--color-bg);
   min-height: 100vh;
 }
 
@@ -76,6 +75,7 @@ h1,
 h2,
 h3 {
   margin: 0;
+  font-family: var(--font-display);
   font-weight: 600;
 }
 
@@ -83,6 +83,7 @@ button,
 input {
   font-family: inherit;
   font-size: inherit;
+  color: inherit;
 }
 
 button {
@@ -90,22 +91,21 @@ button {
 }
 
 a {
-  color: inherit;
+  color: var(--color-accent);
 }
 
 ::selection {
   background: var(--color-accent);
-  color: var(--color-foreground);
+  color: var(--color-accent-ink);
 }
 
-/* Utilidad de vidrio reutilizable (glassmorphism) */
-.glass {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+.u-mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
