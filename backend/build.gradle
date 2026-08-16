@@ -18,12 +18,58 @@ repositories {
 	mavenCentral()
 }
 
+// ── Source set independiente para pruebas de performance ──────────────
+// Se separa de "test" intencionalmente:
+//  - "./gradlew test"            → pruebas unitarias (rápidas, en cada commit)
+//  - "./gradlew performanceTest" → pruebas de rendimiento (más costosas)
+// ──────────────────────────────────────────────────────────────────────
+sourceSets {
+	performanceTest {
+		java.srcDir 'src/performanceTest/java'
+		resources.srcDir 'src/performanceTest/resources'
+		compileClasspath += sourceSets.main.output + sourceSets.test.output
+		runtimeClasspath  += sourceSets.main.output + sourceSets.test.output
+	}
+}
+
+configurations {
+	performanceTestImplementation.extendsFrom testImplementation
+	performanceTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
 dependencies {
+	// Spring Boot
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+
+	// Pruebas unitarias (JUnit 5 + Mockito vía Spring Boot Test)
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.mockito:mockito-core:5.11.0'
+	testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// ── Tarea: pruebas unitarias ──────────────────────────────────────────
 tasks.named('test') {
 	useJUnitPlatform()
+	testLogging {
+		events 'passed', 'skipped', 'failed'
+	}
 }
+
+// ── Tarea: pruebas de performance ─────────────────────────────────────
+// Comando: ./gradlew performanceTest
+tasks.register('performanceTest', Test) {
+	description = 'Ejecuta las pruebas de performance (tiempo de respuesta, concurrencia, throughput)'
+	group       = 'verification'
+	testClassesDirs = sourceSets.performanceTest.output.classesDirs
+	classpath       = sourceSets.performanceTest.runtimeClasspath
+	useJUnitPlatform()
+	testLogging {
+		events 'passed', 'skipped', 'failed'
+		showStandardStreams = true   // muestra las líneas [PERF] con las métricas
+	}
+	shouldRunAfter test
+}
+
+// "./gradlew check" corre unitarias + performance
+check.dependsOn performanceTest
