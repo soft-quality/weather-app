@@ -1,0 +1,48 @@
+name: Weather App CI
+
+# Se ejecuta cuando hay push o pull request a estas ramas
+on:
+  push:
+    branches: [ develop, release, main ]
+  pull_request:
+    branches: [ develop, release, main ]
+
+jobs:
+  test:
+    name: Unit + Performance Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Descarga el código del repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Instala Java 17
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 3. Da permisos de ejecución al wrapper de Gradle
+      - name: Grant execute permission for gradlew
+        run: chmod +x backend/gradlew
+        working-directory: .
+
+      # 4. Corre pruebas unitarias
+      - name: Run unit tests
+        run: ./gradlew test
+        working-directory: ./backend
+
+      # 5. Corre pruebas de performance
+      - name: Run performance tests
+        run: ./gradlew performanceTest
+        working-directory: ./backend
+
+      # 6. Sube los reportes de prueba como artefacto (opcional, para revisarlos)
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: backend/build/reports/tests/
