@@ -107,21 +107,48 @@ npm run dev
 
 Queda disponible en `http://localhost:5173` (necesita el backend corriendo).
 
-## Testing (próxima etapa)
+## Testing y calidad de código
 
-- **Framework de pruebas unitarias:** JUnit 5 + Mockito (ya incluidos por el starter de Spring Boot).
-- **Patrón aplicado:** AAA (Arrange, Act, Assert) en cada caso de prueba.
-- **Pruebas de performance:** por definir (ej. JMH u otra herramienta compatible con Gradle) sobre el endpoint `/api/weather`.
-- **Build tool:** Gradle.
+- **Backend:** JUnit 5 + Mockito + MockMvc / `MockRestServiceServer`, patrón AAA. Cobertura con **JaCoCo** (mínimo 90 % de líneas, verificado en `check`).
+- **Frontend:** Vitest + Testing Library (jsdom). Cobertura V8 con umbrales mínimos.
+- **Análisis estático:** **SonarQube** (`sonar-project.properties`) combina la cobertura de ambos lados y espera el Quality Gate.
+- **Pruebas de performance:** source set `performanceTest` (Gradle).
 
 ```bash
-# Ejecutar todas las pruebas
+# Backend: pruebas + reporte JaCoCo + verificación de umbral
 cd backend
-./gradlew test
+./gradlew test jacocoTestCoverageVerification
+# Reportes: build/reports/jacoco/test/html/index.html (HTML) y jacocoTestReport.xml (Sonar)
 
-# Ejecutar el build completo
+# Backend: pruebas de performance / build completo
+./gradlew performanceTest
 ./gradlew build
+
+# Frontend: pruebas y cobertura
+cd frontend
+npm ci
+npm test
+npm run test:coverage   # reporte en frontend/coverage/index.html
 ```
+
+### Integración continua (GitHub Actions)
+
+El workflow `.github/workflows/tests.yml` corre en cada push/PR a `develop`, `release` y `main`:
+
+1. **backend**: pruebas unitarias, JaCoCo, umbral de cobertura y pruebas de performance.
+2. **frontend**: lint, pruebas con cobertura y build.
+3. **sonar**: descarga los reportes y ejecuta el análisis de SonarQube (espera el Quality Gate).
+
+Los reportes de pruebas y cobertura se publican como artefactos de cada ejecución.
+
+**Configuración requerida en el repositorio** (Settings → Secrets and variables → Actions):
+
+| Nombre | Tipo | Descripción |
+| --- | --- | --- |
+| `SONAR_TOKEN` | Secret | Token de usuario/proyecto de SonarQube o SonarCloud |
+| `SONAR_HOST_URL` | Variable (opcional) | URL del servidor SonarQube. Si se omite se usa `https://sonarcloud.io` |
+
+Ajusta `sonar.projectKey` y `sonar.organization` en `sonar-project.properties` si difieren de los de tu proyecto en Sonar.
 
 ## Flujo de ramas
 
@@ -133,4 +160,4 @@ Este repositorio sigue un flujo de trabajo basado en tres ramas principales:
 
 ## Estado
 
-Aplicación base funcional (backend + frontend conectados a Open-Meteo). Pendiente: pruebas unitarias (AAA) y pruebas de performance.
+Aplicación base funcional (backend + frontend conectados a Open-Meteo). Pruebas unitarias, cobertura (JaCoCo / Vitest) y análisis con SonarQube automatizados en CI.

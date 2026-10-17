@@ -7,42 +7,156 @@ on:
   pull_request:
     branches: [ develop, release, main ]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
-  test:
-    name: Unit + Performance Tests
+  backend:
+    name: Backend - Tests + JaCoCo
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Descarga el código del repo
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # 2. Instala Java 17
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: gradle
 
-      # 3. Da permisos de ejecución al wrapper de Gradle
       - name: Grant execute permission for gradlew
         run: chmod +x backend/gradlew
-        working-directory: .
 
-      # 4. Corre pruebas unitarias
-      - name: Run unit tests
-        run: ./gradlew test
+      # Pruebas unitarias + reporte JaCoCo (HTML / XML / CSV) + verificación del umbral de cobertura
+      - name: Run unit tests with coverage
+        run: ./gradlew test jacocoTestCoverageVerification
         working-directory: ./backend
 
-      # 5. Corre pruebas de performance
       - name: Run performance tests
         run: ./gradlew performanceTest
         working-directory: ./backend
 
-      # 6. Sube los reportes de prueba como artefacto (opcional, para revisarlos)
+      - name: Publish coverage summary
+        if: always()
+        run: |
+          {
+            echo "### Cobertura backend (JaCoCo)"
+            python3 - <<'PY'
+          import csv, glob
+          missed = covered = 0
+          for path in glob.glob('backend/build/reports/jacoco/test/jacocoTestReport.csv'):
+              for row in csv.DictReader(open(path)):
+                  missed += int(row['LINE_MISSED']); covered += int(row['LINE_COVERED'])
+          total = missed + covered
+          pct = 100 * covered / total if total else 0
+          print(f"- Líneas cubiertas: {covered}/{total} ({pct:.1f}%)")
+          PY
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: backend-test-reports
           path: backend/build/reports/tests/
+
+      - name: Upload JaCoCo reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jacoco-report
+          path: backend/build/reports/jacoco/test/
+
+      # Clases y reportes que necesita el análisis de Sonar
+      - name: Upload backend analysis inputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-sonar-inputs
+          path: |
+            backend/build/classes
+            backend/build/reports/jacoco/test/jacocoTestReport.xml
+
+  frontend:
+    name: Frontend - Lint + Tests + Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./frontend
+
+      - name: Lint
+        run: npm run lint
+        working-directory: ./frontend
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+        working-directory: ./frontend
+
+      - name: Build
+        run: npm run build
+        working-directory: ./frontend
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-report
+          path: frontend/coverage/
+
+  sonar:
+    name: SonarQube Analysis
+    needs: [ backend, frontend ]
+    runs-on: ubuntu-latest
+    # Los PRs desde forks no tienen acceso a los secretos
+    if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # historial completo para atribución de código nuevo / blame
+
+      - name: Download backend analysis inputs
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-sonar-inputs
+          path: backend/build
+
+      - name: Download frontend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage-report
+          path: frontend/coverage
+
+      # lcov trae rutas relativas a frontend/; Sonar las resuelve desde la raíz del repo
+      - name: Normalize lcov paths
+        run: sed -i 's#^SF:#SF:frontend/#' frontend/coverage/lcov.info
+
+      - name: SonarQube scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL || 'https://sonarcloud.io' }}
+        with:
+          args: >
+            -Dsonar.qualitygate.wait=true
+
+      - name: Quality Gate summary
+        if: always()
+        run: echo "Resultados en ${{ vars.SONAR_HOST_URL || 'https://sonarcloud.io' }}/dashboard?id=soft-quality_weather-app" >> "$GITHUB_STEP_SUMMARY"
