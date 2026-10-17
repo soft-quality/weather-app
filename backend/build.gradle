@@ -1,5 +1,6 @@
 plugins {
 	id 'java'
+	id 'jacoco'
 	id 'org.springframework.boot' version '4.1.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -51,6 +52,7 @@ dependencies {
 // ── Tarea: pruebas unitarias ──────────────────────────────────────────
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy 'jacocoTestReport'
 	testLogging {
 		events 'passed', 'skipped', 'failed'
 	}
@@ -73,3 +75,36 @@ tasks.register('performanceTest', Test) {
 
 // "./gradlew check" corre unitarias + performance
 check.dependsOn performanceTest
+
+
+// ── Cobertura de código (JaCoCo) ──────────────────────────────────────
+// Reportes en build/reports/jacoco/test (HTML) y build/reports/jacoco/test/jacocoTestReport.xml (Sonar)
+jacoco {
+	toolVersion = '0.8.13'
+}
+
+tasks.named('jacocoTestReport') {
+	dependsOn tasks.named('test')
+	reports {
+		xml.required = true
+		html.required = true
+		csv.required = true
+	}
+	classDirectories.setFrom(files(classDirectories.files.collect {
+		fileTree(dir: it, exclude: ['**/BackendApplication*'])
+	}))
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+	classDirectories.setFrom(tasks.named('jacocoTestReport').get().classDirectories)
+	violationRules {
+		rule {
+			limit {
+				counter = 'LINE'
+				minimum = 0.90
+			}
+		}
+	}
+}
+
+check.dependsOn jacocoTestCoverageVerification
