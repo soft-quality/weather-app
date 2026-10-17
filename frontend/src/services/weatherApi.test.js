@@ -47,7 +47,9 @@ describe('weatherApi', () => {
 
       expect(result).toEqual(data)
       expect(fetchMock).toHaveBeenCalledTimes(1)
-      expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/weather\?city=S%C3%A3o%20Paulo$/)
+      const url = new URL(fetchMock.mock.calls[0][0])
+      expect(url.pathname).toBe('/api/weather')
+      expect(url.searchParams.get('city')).toBe('São Paulo')
     })
 
     it('lanza WeatherApiError con el mensaje del backend', async () => {
@@ -132,8 +134,19 @@ describe('weatherApi', () => {
       const result = await fetchCitySuggestions('  Mad  ', { signal: controller.signal })
 
       expect(result).toEqual(suggestions)
-      expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/cities\?query=Mad$/)
+      const url = new URL(fetchMock.mock.calls[0][0])
+      expect(url.pathname).toBe('/api/cities')
+      expect(url.searchParams.get('query')).toBe('Mad')
       expect(fetchMock.mock.calls[0][1]).toEqual({ signal: controller.signal })
+    })
+
+    it('limita la longitud de la consulta enviada', async () => {
+      const fetchMock = mockFetch(okResponse([]))
+
+      await fetchCitySuggestions('a'.repeat(500))
+
+      const url = new URL(fetchMock.mock.calls[0][0])
+      expect(url.searchParams.get('query')).toHaveLength(100)
     })
 
     it('funciona sin opciones', async () => {
