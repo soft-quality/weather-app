@@ -108,3 +108,28 @@ tasks.named('jacocoTestCoverageVerification') {
 }
 
 check.dependsOn jacocoTestCoverageVerification
+
+// Exporta los JAR que el scanner independiente necesita en el job de SonarQube.
+tasks.register('copySonarMainLibraries', Sync) {
+	from configurations.compileClasspath
+	from configurations.runtimeClasspath
+	include '*.jar'
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	into layout.buildDirectory.dir('sonar-libraries/main')
+}
+
+tasks.register('copySonarTestLibraries', Sync) {
+	from configurations.testCompileClasspath
+	from configurations.testRuntimeClasspath
+	from configurations.performanceTestCompileClasspath
+	from configurations.performanceTestRuntimeClasspath
+	include '*.jar'
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	into layout.buildDirectory.dir('sonar-libraries/test')
+}
+
+tasks.register('prepareSonarLibraries') {
+	description = 'Exporta dependencias de Java y de pruebas para el análisis de SonarQube'
+	group = 'verification'
+	dependsOn 'copySonarMainLibraries', 'copySonarTestLibraries'
+}

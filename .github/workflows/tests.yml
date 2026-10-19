@@ -41,6 +41,10 @@ jobs:
         run: ./gradlew performanceTest
         working-directory: ./backend
 
+      - name: Prepare Java libraries for SonarQube
+        run: ./gradlew prepareSonarLibraries
+        working-directory: ./backend
+
       - name: Publish coverage summary
         if: always()
         run: |
@@ -78,6 +82,7 @@ jobs:
         with:
           name: backend-sonar-inputs
           path: |
+            backend/build/sonar-libraries
             backend/build/classes
             backend/build/reports/jacoco/test/jacocoTestReport.xml
 
