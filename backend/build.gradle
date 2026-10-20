@@ -31,11 +31,17 @@ sourceSets {
 		compileClasspath += sourceSets.main.output + sourceSets.test.output
 		runtimeClasspath  += sourceSets.main.output + sourceSets.test.output
 	}
+	acceptanceTest {
+		compileClasspath += sourceSets.main.output
+		runtimeClasspath += sourceSets.main.output
+	}
 }
 
 configurations {
 	performanceTestImplementation.extendsFrom testImplementation
 	performanceTestRuntimeOnly.extendsFrom testRuntimeOnly
+	acceptanceTestImplementation.extendsFrom testImplementation
+	acceptanceTestRuntimeOnly.extendsFrom testRuntimeOnly
 }
 
 dependencies {
@@ -47,6 +53,8 @@ dependencies {
 	testImplementation 'org.mockito:mockito-core:5.11.0'
 	testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	// Karate 1.5.2 permite conservar Java 17. El runner usa el JUnit del proyecto.
+	acceptanceTestImplementation 'io.karatelabs:karate-core:1.5.2'
 }
 
 // ── Tarea: pruebas unitarias ──────────────────────────────────────────
@@ -75,6 +83,20 @@ tasks.register('performanceTest', Test) {
 
 // "./gradlew check" corre unitarias + performance
 check.dependsOn performanceTest
+
+tasks.register('acceptanceTest', Test) {
+	description = 'Ejecuta aceptación de la API con Karate y proveedor meteorológico local'
+	group = 'verification'
+	testClassesDirs = sourceSets.acceptanceTest.output.classesDirs
+	classpath = sourceSets.acceptanceTest.runtimeClasspath
+	useJUnitPlatform()
+	systemProperty 'karate.reportDir', layout.buildDirectory.dir('reports/karate').get().asFile.absolutePath
+	outputs.dir layout.buildDirectory.dir('reports/karate')
+	outputs.upToDateWhen { false }
+	shouldRunAfter test, performanceTest
+}
+
+check.dependsOn acceptanceTest
 
 
 // ── Cobertura de código (JaCoCo) ──────────────────────────────────────
@@ -123,6 +145,8 @@ tasks.register('copySonarTestLibraries', Sync) {
 	from configurations.testRuntimeClasspath
 	from configurations.performanceTestCompileClasspath
 	from configurations.performanceTestRuntimeClasspath
+	from configurations.acceptanceTestCompileClasspath
+	from configurations.acceptanceTestRuntimeClasspath
 	include '*.jar'
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	into layout.buildDirectory.dir('sonar-libraries/test')
