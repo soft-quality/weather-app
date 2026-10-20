@@ -6,6 +6,12 @@ Aplicación del clima desarrollada como proyecto de la asignatura **Calidad de S
 - **Pruebas de performance** sobre los componentes críticos de la aplicación.
 - Ejecución y validación de todas las pruebas mediante **Gradle**.
 
+## Pruebas de aceptación
+
+La API incluye siete escenarios de aceptación automatizados con Karate. Desde `backend`, ejecutar `./gradlew acceptanceTest` (Windows: `.\gradlew.bat acceptanceTest`). El entorno se inicia y cierra automáticamente con un proveedor meteorológico local de datos fijos.
+
+Ver [configuración, escenarios y reportes de Karate](docs/KARATE.md) y [criterios de aceptación manuales de la interfaz](docs/PRUEBAS_ACEPTACION.md).
+
 ## Objetivos del proyecto
 
 1. Implementar una aplicación del clima funcional (consumo de datos meteorológicos y presentación al usuario).
@@ -71,7 +77,7 @@ weather-app/
             └── weatherCodes.js         # mapeo de códigos WMO a texto/ícono
 ```
 
-> Nota: por ahora el proyecto contiene solo la aplicación (sin pruebas todavía). Las carpetas `src/test` de cada módulo se irán agregando en una siguiente etapa, junto con las pruebas de performance.
+> El proyecto incluye pruebas unitarias, de integración, de rendimiento y aceptación de API con Karate. Consulta docs/KARATE.md para ejecutar la suite de aceptación.
 
 ## Diseño (frontend)
 

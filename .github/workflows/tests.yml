@@ -45,6 +45,17 @@ jobs:
         run: ./gradlew prepareSonarLibraries
         working-directory: ./backend
 
+      - name: Run API acceptance tests with Karate
+        run: ./gradlew acceptanceTest
+        working-directory: ./backend
+
+      - name: Upload Karate acceptance reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-karate-reports
+          path: backend/build/reports/karate/
+
       - name: Publish coverage summary
         if: always()
         run: |
